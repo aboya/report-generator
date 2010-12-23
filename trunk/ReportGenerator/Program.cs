@@ -25,10 +25,14 @@ namespace ReportGenerator
                 MailMessage msg = new MailMessage();
                 msg.Body = GetBody();
                 msg.Subject = GetSubject();
-                msg.To.Add(new MailAddress(ConfigurationManager.AppSettings["SendTo"]));
+                FillEmails(msg.To, ConfigurationManager.AppSettings["SendTo"].Split(','));
+                if(!string.IsNullOrEmpty(ConfigurationManager.AppSettings["CcSendTo"]))
+                    FillEmails(msg.CC, ConfigurationManager.AppSettings["CcSendTo"].Split(','));
+                if(!string.IsNullOrEmpty(ConfigurationManager.AppSettings["BccSendTo"]))
+                    FillEmails(msg.Bcc, ConfigurationManager.AppSettings["BccSendTo"].Split(','));
                 string host = ConfigurationManager.AppSettings["host"];
                 System.Net.Mail.SmtpClient client = new SmtpClient(host);
-                msg.From = new MailAddress("aboimov@softwarium.net");
+                msg.From = new MailAddress(ConfigurationManager.AppSettings["From"]);
                 msg.IsBodyHtml = true;
                 client.Send(msg);
                 
@@ -40,6 +44,13 @@ namespace ReportGenerator
             }
             Console.ReadKey();
             
+        }
+        private static void FillEmails(MailAddressCollection to, string[] addr)
+        {
+            foreach(string a in addr)
+            {
+                to.Add(new MailAddress(a.Trim()));
+            }
         }
 
         private static string GetSubject()
