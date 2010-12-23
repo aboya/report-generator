@@ -1,0 +1,4 @@
+﻿http://google.com
+http://yandex.ru
+курил бамбук
+try to get value
