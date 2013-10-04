@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace ReportGenerator
 {
@@ -14,16 +15,23 @@ namespace ReportGenerator
         Match matchPause;
         Match matchTime;
         Match matchTimeRange;
+        const string pausePattern = @"\[Wait:((\d)*)\]";
+        const string timeRangePattern = @"\[SendAt:(((\d\d):(\d\d))-((\d\d):(\d\d)))\]";
+        string clearedBody;
+ 
         public Waiter(string inputtext)
         {
-            matchPause = Regex.Match(inputtext, @"\[Wait:((\d)*)\]");
-            matchTimeRange = Regex.Match(inputtext, @"\[SendAt:(((\d\d):(\d\d))-((\d\d):(\d\d)))\]");
+            matchPause = Regex.Match(inputtext, pausePattern);
+            matchTimeRange = Regex.Match(inputtext, timeRangePattern);
+            clearedBody = Regex.Replace(Regex.Replace(inputtext, timeRangePattern, string.Empty, RegexOptions.IgnoreCase), timeRangePattern, string.Empty, RegexOptions.IgnoreCase);
+
         }
         public void Wait()
         {
             if (matchPause.Success)
             {
                 int.TryParse(matchPause.Groups[1].Value, out Pause);
+                Pause *= 60000;
             }
             else if (matchTimeRange.Success && matchTimeRange.Groups.Count > 6)
             {
@@ -35,9 +43,16 @@ namespace ReportGenerator
                 RandomRange = Convert.ToInt32(end.Subtract(start).TotalSeconds);
                 Random random = new Random(Convert.ToInt32(now.Ticks % int.MaxValue));
                 Pause += random.Next(0, RandomRange);
+                Pause *= 1000;
             }
+            Thread.Sleep(Pause);
 
 
         }
+        public string GetClearedBody()
+        {
+            return clearedBody;
+        }
+
     }
 }
