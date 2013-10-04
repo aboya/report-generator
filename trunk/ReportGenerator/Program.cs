@@ -6,6 +6,7 @@ using System.Net.Mail;
 using System.Configuration;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
 namespace ReportGenerator
 {
     class Program
@@ -22,8 +23,18 @@ namespace ReportGenerator
             try
             {
 
+
                 MailMessage msg = new MailMessage();
                 msg.Body = GetBody();
+
+                //Getting Pause
+
+                Match m = Regex.Match(msg.Body, @"\[Wait:((\d)*)\]");
+                if (m.Success && m.Groups.Count > 1 && m.Groups[1].Value != null)
+                {
+                    int.TryParse(m.Groups[1].Value, out Pause);
+                }
+
                 msg.Subject = GetSubject();
                 FillEmails(msg.To, ConfigurationManager.AppSettings["SendTo"].Split(','));
                 if(!string.IsNullOrEmpty(ConfigurationManager.AppSettings["CcSendTo"]))
@@ -31,9 +42,19 @@ namespace ReportGenerator
                 if(!string.IsNullOrEmpty(ConfigurationManager.AppSettings["BccSendTo"]))
                     FillEmails(msg.Bcc, ConfigurationManager.AppSettings["BccSendTo"].Split(','));
                 string host = ConfigurationManager.AppSettings["host"];
-                System.Net.Mail.SmtpClient client = new SmtpClient(host);
+                SmtpClientEx client = new SmtpClientEx(host,"aboimov.softwarium.net");
+                 
+                
+
+
                 msg.From = new MailAddress(ConfigurationManager.AppSettings["From"]);
                 msg.IsBodyHtml = true;
+
+                if (Pause > 0)
+                {
+                    Console.WriteLine(string.Format("Sleepping for {0} minutes", Pause));
+                    Thread.Sleep(Pause * 60000);
+                }
                 client.Send(msg);
                 
                 Console.WriteLine("Done");
@@ -64,7 +85,7 @@ namespace ReportGenerator
             return ReplaceTemplates(subject);
             
         }
-
+        private static int Pause = 0;
         private static string GetBody()
         {
             string body = string.Empty;
@@ -73,6 +94,7 @@ namespace ReportGenerator
                 body = sr.ReadToEnd();
             }
             body = body.Replace("[Tasks]", GetTaskTemplate());
+            
 
             return ReplaceTemplates(body);
         }
@@ -101,6 +123,8 @@ namespace ReportGenerator
                     res.Add(line);
                 }
             }
+
+
             return res;
         }
         public static string ReplaceTemplates(string s)
