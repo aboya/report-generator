@@ -24,19 +24,14 @@ namespace ReportGenerator
             try
             {
 
-                Waiter w = new Waiter("ajhfjsdhf sajdfhsajfh sdfhsdhf [SendAt:18:20-19:40] ashda asdjhas");
-                w.Wait();
+ 
                 MailMessage msg = new MailMessage();
                 msg.Body = GetBody();
-
+                waiter = new Waiter(msg.Body);
                 //Getting Pause
+                msg.Body = waiter.GetClearedBody();
 
-                Match m = Regex.Match(msg.Body, @"\[Wait:((\d)*)\]");
-                if (m.Success && m.Groups.Count > 1 && m.Groups[1].Value != null)
-                {
-                    int.TryParse(m.Groups[1].Value, out Pause);
-                }
-
+ 
                 msg.Subject = GetSubject();
                 FillEmails(msg.To, ConfigurationManager.AppSettings["SendTo"].Split(','));
                 if(!string.IsNullOrEmpty(ConfigurationManager.AppSettings["CcSendTo"]))
@@ -52,11 +47,7 @@ namespace ReportGenerator
                 msg.From = new MailAddress(ConfigurationManager.AppSettings["From"]);
                 msg.IsBodyHtml = true;
                 if (waiter != null) waiter.Wait();
-                if (Pause > 0)
-                {
-                    Console.WriteLine(string.Format("Sleepping for {0} minutes", Pause));
-                    Thread.Sleep(Pause * 60000);
-                }
+ 
                 client.Send(msg);
                 
                 Console.WriteLine("Done");
@@ -125,6 +116,7 @@ namespace ReportGenerator
                     res.Add(line);
                 }
             }
+
 
 
             return res;
