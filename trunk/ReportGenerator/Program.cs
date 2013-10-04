@@ -18,12 +18,14 @@ namespace ReportGenerator
                 return Encoding.Default;
             }
         }
+        static Waiter waiter;
         static void Main(string[] args)
         {
             try
             {
 
-
+                Waiter w = new Waiter("ajhfjsdhf sajdfhsajfh sdfhsdhf [SendAt:18:20-19:40] ashda asdjhas");
+                w.Wait();
                 MailMessage msg = new MailMessage();
                 msg.Body = GetBody();
 
@@ -49,7 +51,7 @@ namespace ReportGenerator
 
                 msg.From = new MailAddress(ConfigurationManager.AppSettings["From"]);
                 msg.IsBodyHtml = true;
-
+                if (waiter != null) waiter.Wait();
                 if (Pause > 0)
                 {
                     Console.WriteLine(string.Format("Sleepping for {0} minutes", Pause));
